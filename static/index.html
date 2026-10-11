@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Écoute – French listening practice</title>
+<meta name="theme-color" content="#FBFBF6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151A2E" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Écoute">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --paper:#FBFBF6; --rule:#B9CDEB; --rule-faint:#E2EAF6; --margin:#D9475B;
+  --ink:#1F2A5A; --ink-soft:#56608A; --good:#2E7D4F; --good-bg:#E4F2E8;
+  --bad:#B4323F; --bad-bg:#FBE6E8; --chip:#EEF2FA; --btn:#1F2A5A; --btn-ink:#FFFFFF;
+  --hand:'Kalam', 'Comic Sans MS', 'Segoe Print', cursive;
+  --body:'Atkinson Hyperlegible', 'Segoe UI', Verdana, sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#151A2E; --rule:#34416B; --rule-faint:#222A47; --margin:#E06A7A;
+    --ink:#E7EBFA; --ink-soft:#A7B0D6; --good:#7FD39C; --good-bg:#1B3427;
+    --bad:#F28A95; --bad-bg:#3A1E25; --chip:#222A47; --btn:#E7EBFA; --btn-ink:#151A2E;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#151A2E; --rule:#34416B; --rule-faint:#222A47; --margin:#E06A7A;
+  --ink:#E7EBFA; --ink-soft:#A7B0D6; --good:#7FD39C; --good-bg:#1B3427;
+  --bad:#F28A95; --bad-bg:#3A1E25; --chip:#222A47; --btn:#E7EBFA; --btn-ink:#151A2E;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; min-height:100vh; color:var(--ink); font-family:var(--body); font-size:1.0625rem; line-height:1.5;
+  background-color:var(--paper);
+  /* Seyès exercise-book ruling */
+  background-image:
+    linear-gradient(to right, transparent calc(2.5rem - 1px), var(--margin) calc(2.5rem - 1px), var(--margin) 2.5rem, transparent 2.5rem),
+    linear-gradient(to bottom, var(--rule) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--rule-faint) 1px, transparent 1px);
+  background-size:100% 100%, 100% 2rem, 100% .5rem;
+  background-attachment:local;
+}
+main{max-width:34rem; margin:0 auto; padding:1.5rem 1.25rem 3rem 3.5rem}
+h1{font-family:var(--hand); font-weight:700; font-size:2.6rem; line-height:1; margin:.5rem 0 .25rem}
+.lede{margin:0 0 1.5rem; color:var(--ink-soft)}
+h2{font-size:1.05rem; margin:1.5rem 0 .5rem}
+button{font:inherit; cursor:pointer}
+:focus-visible{outline:3px solid var(--margin); outline-offset:3px}
+.chips{display:flex; flex-wrap:wrap; gap:.5rem}
+.chip{border:2px solid transparent; background:var(--chip); color:var(--ink); padding:.4rem .85rem; border-radius:999px}
+.chip[aria-pressed="true"]{border-color:var(--ink); font-weight:700}
+.row{display:flex; gap:1rem; flex-wrap:wrap; align-items:center}
+label{font-weight:700}
+select,input[type=range]{font:inherit; color:var(--ink)}
+select{background:var(--paper); border:2px solid var(--rule); border-radius:.5rem; padding:.3rem .5rem}
+.primary{background:var(--btn); color:var(--btn-ink); border:0; border-radius:.6rem; padding:.75rem 1.4rem; font-weight:700}
+.secondary{background:transparent; color:var(--ink); border:2px solid var(--ink); border-radius:.6rem; padding:.6rem 1.1rem; font-weight:700}
+.link{background:none; border:0; color:var(--ink-soft); text-decoration:underline; padding:.25rem 0}
+textarea{width:100%; min-height:9rem; font-family:var(--body); font-size:1rem; color:var(--ink); background:var(--paper); border:2px solid var(--rule); border-radius:.5rem; padding:.6rem}
+.note{font-size:.92rem; color:var(--ink-soft)}
+.warn{background:var(--bad-bg); color:var(--bad); padding:.6rem .8rem; border-radius:.5rem; font-size:.95rem}
+.hidden{display:none !important}
+
+/* Practice screen */
+.progress{display:flex; justify-content:space-between; color:var(--ink-soft); font-size:.95rem; margin-bottom:.5rem}
+.bar{height:.4rem; background:var(--rule-faint); border-radius:999px; overflow:hidden; margin-bottom:2rem}
+.bar span{display:block; height:100%; background:var(--ink); width:0; transition:width .3s}
+.speaker-wrap{display:flex; flex-direction:column; align-items:center; gap:.75rem; margin:1rem 0 2rem}
+.speaker{
+  width:9rem; height:9rem; border-radius:50%; border:0; background:var(--btn); color:var(--btn-ink);
+  display:grid; place-items:center; box-shadow:0 0 0 .5rem var(--paper), 0 0 0 .65rem var(--rule);
+}
+.speaker svg{width:3.6rem; height:3.6rem}
+.speaker.playing{animation:pulse .9s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 .5rem var(--paper), 0 0 0 1.1rem var(--rule)}}
+@media (prefers-reduced-motion:reduce){.speaker.playing{animation:none}.bar span{transition:none}}
+.answer-line{position:relative}
+.answer-line input{
+  width:100%; font-family:var(--hand); font-size:2rem; color:var(--ink); background:transparent;
+  border:0; border-bottom:3px solid var(--ink); padding:.1rem .2rem; border-radius:0;
+}
+.answer-line input:focus{outline:none; border-bottom-color:var(--margin)}
+.answer-line input::placeholder{color:var(--ink-soft); opacity:.6}
+.actions{display:flex; gap:.75rem; flex-wrap:wrap; margin-top:1.25rem}
+.feedback{margin-top:1.25rem; padding:.9rem 1rem; border-radius:.6rem; font-size:1.05rem}
+.feedback.good{background:var(--good-bg); color:var(--good)}
+.feedback.bad{background:var(--bad-bg); color:var(--bad)}
+.feedback .fr{font-family:var(--hand); font-size:1.5rem; display:block; color:var(--ink)}
+.score-big{font-family:var(--hand); font-size:4rem; line-height:1; margin:.5rem 0}
+ul.missed{padding-left:1.2rem}
+ul.missed li{margin:.2rem 0}
+ul.missed .fr{font-family:var(--hand); font-size:1.25rem}
+input.text{font:inherit; color:var(--ink); background:var(--paper); border:2px solid var(--rule); border-radius:.5rem; padding:.4rem .6rem; flex:1; min-width:10rem}
+.filebtn{display:inline-flex; align-items:center; cursor:pointer}
+.filebtn:focus-within{outline:3px solid var(--margin); outline-offset:3px}
+.chip.add{border:2px dashed var(--rule); background:transparent}
+.chip.add[aria-pressed="true"]{border-style:solid; border-color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+
+<!-- SETUP -->
+<section id="setup">
+  <h1>Écoute</h1>
+  <p class="lede">Listen to the French word, then write it in English.</p>
+
+  <div id="voiceWarn" class="warn hidden">This device has no French voice installed, so words may sound English. On most phones and computers you can add one in the speech or language settings.</div>
+
+  <h2>Choose a topic</h2>
+  <div class="chips" id="topics"></div>
+
+  <div id="customBox" class="hidden">
+    <h2>Your word list</h2>
+    <p class="note">One word per line, French first, then English. Separate them with =, a spaced dash, a comma or a tab, so a list pasted straight from a spreadsheet works. Add extra accepted answers with a slash, e.g. <em>la voiture = car / automobile</em></p>
+    <textarea id="customText" spellcheck="false"></textarea>
+    <p class="note" id="customCount"></p>
+    <div class="row">
+      <label for="listName">List name</label>
+      <input id="listName" class="text" placeholder="e.g. Year 5, week 3">
+    </div>
+    <div class="actions">
+      <button class="secondary" id="saveListBtn">Save list</button>
+      <label class="secondary filebtn">Load from file<input type="file" id="fileIn" accept=".txt,.csv,.tsv,text/plain,text/csv" hidden></label>
+      <button class="link hidden" id="deleteListBtn">Delete this list</button>
+    </div>
+  </div>
+
+  <h2>Settings</h2>
+  <div class="row">
+    <label for="count">Words per round</label>
+    <select id="count"><option>5</option><option selected>10</option><option>15</option><option value="all">All</option></select>
+  </div>
+  <div class="row" style="margin-top:.75rem">
+    <label for="rate">Speaking speed</label>
+    <input type="range" id="rate" min="0.5" max="1.1" step="0.1" value="0.8">
+    <span id="rateLabel" class="note">Steady</span>
+  </div>
+  <div class="row" style="margin-top:.75rem">
+    <label><input type="checkbox" id="showFr" checked> Show the French spelling after each answer</label>
+  </div>
+
+  <div class="actions" style="margin-top:2rem">
+    <button class="primary" id="startBtn">Start practice</button>
+  </div>
+</section>
+
+<!-- PRACTICE -->
+<section id="practice" class="hidden">
+  <div class="progress"><span id="progText">Word 1 of 10</span><span id="scoreText">0 correct</span></div>
+  <div class="bar"><span id="barFill"></span></div>
+
+  <div class="speaker-wrap">
+    <button class="speaker" id="speakBtn" aria-label="Play the French word">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+    </button>
+    <button class="link" id="slowBtn">Play it slowly</button>
+  </div>
+
+  <div class="answer-line">
+    <label for="answer" class="note" style="font-weight:400">In English, the word is…</label>
+    <input id="answer" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="type here">
+  </div>
+
+  <div class="actions" id="answerActions">
+    <button class="primary" id="checkBtn">Check</button>
+    <button class="secondary" id="skipBtn">I don't know</button>
+  </div>
+
+  <div id="feedback" class="feedback hidden" role="status" aria-live="polite"></div>
+
+  <div class="actions hidden" id="nextActions">
+    <button class="primary" id="nextBtn">Next word</button>
+  </div>
+
+  <p style="margin-top:2.5rem"><button class="link" id="quitBtn">Stop and go back</button></p>
+</section>
+
+<!-- RESULTS -->
+<section id="results" class="hidden">
+  <h1>Bien joué!</h1>
+  <p class="score-big" id="finalScore"></p>
+  <p id="finalMsg" class="lede"></p>
+  <div id="missedBox">
+    <h2>Words to practise</h2>
+    <ul class="missed" id="missedList"></ul>
+  </div>
+  <div class="actions">
+    <button class="primary" id="retryMissedBtn">Practise these again</button>
+    <button class="secondary" id="againBtn">New round</button>
+    <button class="link" id="homeBtn">Change topic</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+const LISTS = {
+  "Greetings": [
+    ["bonjour","hello / good morning / good day / hi"],["au revoir","goodbye / bye"],["merci","thank you / thanks"],
+    ["s'il vous plaît","please"],["oui","yes"],["non","no"],["salut","hi / hello / bye"],["bonsoir","good evening"],
+    ["bonne nuit","good night"],["pardon","sorry / excuse me / pardon"],["à bientôt","see you soon"],["de rien","you're welcome / no problem / it's nothing"]
+  ],
+  "Numbers": [
+    ["un","one / 1"],["deux","two / 2"],["trois","three / 3"],["quatre","four / 4"],["cinq","five / 5"],["six","six / 6"],
+    ["sept","seven / 7"],["huit","eight / 8"],["neuf","nine / 9"],["dix","ten / 10"],["onze","eleven / 11"],["douze","twelve / 12"],
+    ["quinze","fifteen / 15"],["vingt","twenty / 20"],["cent","hundred / one hundred / a hundred / 100"]
+  ],
+  "Colours": [
+    ["rouge","red"],["bleu","blue"],["vert","green"],["jaune","yellow"],["noir","black"],["blanc","white"],
+    ["orange","orange"],["rose","pink"],["violet","purple / violet"],["gris","grey / gray"],["marron","brown"],["marron clair","light brown"]
+  ],
+  "Animals": [
+    ["le chien","dog"],["le chat","cat"],["le cheval","horse"],["la vache","cow"],["le cochon","pig"],["le mouton","sheep"],
+    ["le lapin","rabbit / bunny"],["l'oiseau","bird"],["le poisson","fish"],["la souris","mouse"],["le canard","duck"],
+    ["la poule","hen / chicken"],["le lion","lion"],["l'éléphant","elephant"],["le serpent","snake"]
+  ],
+  "Food": [
+    ["le pain","bread"],["le fromage","cheese"],["la pomme","apple"],["la banane","banana"],["le lait","milk"],["l'eau","water"],
+    ["le poulet","chicken"],["le gâteau","cake"],["la glace","ice cream / ice"],["l'œuf","egg"],["le jus d'orange","orange juice"],
+    ["les frites","chips / fries / french fries"],["la fraise","strawberry"],["le beurre","butter"],["la pomme de terre","potato"]
+  ],
+  "Family": [
+    ["la mère","mother / mum / mom"],["le père","father / dad"],["le frère","brother"],["la sœur","sister"],["le grand-père","grandfather / grandad / grandpa"],
+    ["la grand-mère","grandmother / grandma / granny / nan / nana"],["l'oncle","uncle"],["la tante","aunt / auntie"],["le cousin","cousin"],
+    ["le fils","son"],["la fille","daughter / girl"],["le bébé","baby"]
+  ],
+  "Days & months": [
+    ["lundi","monday"],["mardi","tuesday"],["mercredi","wednesday"],["jeudi","thursday"],["vendredi","friday"],["samedi","saturday"],
+    ["dimanche","sunday"],["janvier","january"],["février","february"],["mars","march"],["avril","april"],["mai","may"],
+    ["juin","june"],["juillet","july"],["août","august"],["septembre","september"],["octobre","october"],["novembre","november"],["décembre","december"]
+  ],
+  "School": [
+    ["le stylo","pen"],["le crayon","pencil"],["la gomme","rubber / eraser"],["la règle","ruler"],["le livre","book"],["le cahier","exercise book / notebook"],
+    ["la trousse","pencil case"],["le sac","bag / school bag"],["la table","table"],["la chaise","chair"],["le professeur","teacher"],["l'école","school"]
+  ],
+  "My words": []
+};
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+};
+
+const SAMPLE = "la voiture = car\nla maison = house / home\nle soleil = sun";
+let saved = {};
+try{ saved = JSON.parse(store.get('ecoute-lists') || '{}') || {}; }catch(e){ saved = {}; }
+function persist(){ store.set('ecoute-lists', JSON.stringify(saved)); }
+let topic = store.get('ecoute-topic') || 'Greetings';
+if(!LISTS[topic] && !(topic.startsWith('saved:') && saved[topic.slice(6)] !== undefined)) topic = 'Greetings';
+
+// Read a pasted list: French first, then English, split on the first separator found
+function parseList(text){
+  const words = [], bad = [];
+  const seps = ['=', '\t', ' - ', ' – ', ' — ', ';', ','];
+  text.split(/\r?\n/).forEach(raw=>{
+    const line = raw.trim();
+    if(!line) return;
+    for(const s of seps){
+      const i = line.indexOf(s);
+      if(i>0){
+        const fr = line.slice(0,i).trim().replace(/^"|"$/g,'');
+        const en = line.slice(i+s.length).trim().replace(/^"|"$/g,'');
+        if(fr && en){
+          if(!(fr.toLowerCase()==='french' && en.toLowerCase().startsWith('english'))) words.push([fr,en]);
+          return;
+        }
+      }
+    }
+    bad.push(line);
+  });
+  return {words, bad};
+}
+function updateCount(){
+  const {words, bad} = parseList($('customText').value);
+  let msg = words.length ? `${words.length} word${words.length>1?'s':''} ready. Each round picks from these at random.` : 'Add some words to get started.';
+  if(bad.length) msg += ` ${bad.length} line${bad.length>1?'s have':' has'} no English meaning and will be skipped: ${bad.slice(0,3).join('; ')}${bad.length>3?'…':''}`;
+  $('customCount').textContent = msg;
+}
+
+// Topic chips
+function renderTopics(){
+  $('topics').innerHTML = '';
+  const add = (label, key, extra)=>{
+    const b = document.createElement('button');
+    b.className = 'chip' + (extra ? ' '+extra : ''); b.textContent = label;
+    b.setAttribute('aria-pressed', key===topic);
+    b.onclick = ()=> selectTopic(key);
+    $('topics').appendChild(b);
+  };
+  Object.keys(LISTS).filter(n=>n!=='My words').forEach(n=>add(n,n));
+  Object.keys(saved).sort().forEach(n=>add(n,'saved:'+n));
+  add('+ New list','My words','add');
+  const custom = topic==='My words' || topic.startsWith('saved:');
+  $('customBox').classList.toggle('hidden', !custom);
+  $('deleteListBtn').classList.toggle('hidden', !topic.startsWith('saved:'));
+}
+function selectTopic(key){
+  topic = key; store.set('ecoute-topic', key);
+  if(key.startsWith('saved:')){ const n = key.slice(6); $('customText').value = saved[n]; $('listName').value = n; }
+  else if(key==='My words'){ const c = store.get('ecoute-custom'); $('customText').value = c===null ? SAMPLE : c; $('listName').value = ''; }
+  renderTopics(); updateCount();
+}
+selectTopic(topic);
+
+// Speed
+const rateNames = {0.5:'Very slow',0.6:'Slow',0.7:'Slow',0.8:'Steady',0.9:'Normal',1:'Normal',1.1:'Quick'};
+function updateRate(){ $('rateLabel').textContent = rateNames[parseFloat($('rate').value).toFixed(1)*1] || ''; }
+$('rate').value = store.get('ecoute-rate') || 0.8; updateRate();
+$('rate').oninput = ()=>{ updateRate(); store.set('ecoute-rate',$('rate').value); };
+
+// Voices
+let frVoice = null;
+function pickVoice(){
+  if(!('speechSynthesis' in window)) return;
+  const voices = speechSynthesis.getVoices();
+  if(!voices.length) return;
+  const fr = voices.filter(v=>/^fr(-|_|$)/i.test(v.lang));
+  frVoice = fr.find(v=>/fr-FR/i.test(v.lang) && /google|amélie|thomas|audrey|marie|denise|premium|enhanced/i.test(v.name))
+         || fr.find(v=>/fr-FR/i.test(v.lang)) || fr[0] || null;
+  $('voiceWarn').classList.toggle('hidden', !!frVoice);
+}
+if('speechSynthesis' in window){
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
+  setTimeout(()=>{ if(!frVoice && speechSynthesis.getVoices().length) $('voiceWarn').classList.remove('hidden'); }, 1500);
+} else {
+  $('voiceWarn').textContent = "This browser can't speak words aloud. Try Chrome, Edge or Safari.";
+  $('voiceWarn').classList.remove('hidden');
+}
+
+function speak(text, slow){
+  if(!('speechSynthesis' in window)) return;
+  // Safari can drop a word if cancel() runs when nothing is playing
+  if(speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'fr-FR';
+  if(frVoice) u.voice = frVoice;
+  const base = parseFloat($('rate').value);
+  u.rate = slow ? Math.max(0.4, base - 0.35) : base;
+  u.onstart = ()=> $('speakBtn').classList.add('playing');
+  u.onend = u.onerror = ()=> $('speakBtn').classList.remove('playing');
+  speechSynthesis.speak(u);
+}
+
+// Answer checking
+function norm(s){
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[’']/g,"'")
+    .replace(/[^a-z0-9' ]+/g,' ')
+    .replace(/^(the|a|an|to|some) /,'')
+    .replace(/\s+/g,' ').trim();
+}
+function lev(a,b){
+  const m=a.length,n=b.length; if(!m) return n; if(!n) return m;
+  let prev=Array.from({length:n+1},(_,i)=>i);
+  for(let i=1;i<=m;i++){
+    const cur=[i];
+    for(let j=1;j<=n;j++) cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    prev=cur;
+  }
+  return prev[n];
+}
+function check(input, answers){
+  const g = norm(input);
+  if(!g) return 'empty';
+  const opts = answers.split(/[\/,;]/).map(norm).filter(Boolean);
+  if(opts.includes(g)) return 'exact';
+  if(opts.some(o=> o.length>=5 && lev(g,o)<=1)) return 'close';
+  return 'wrong';
+}
+
+// Session
+let deck=[], idx=0, score=0, missed=[], answered=false, lastDeckSource=[];
+
+function getWords(){
+  if(LISTS[topic] && topic!=='My words') return LISTS[topic];
+  if(topic==='My words') store.set('ecoute-custom', $('customText').value);
+  return parseList($('customText').value).words;
+}
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function show(id){ ['setup','practice','results'].forEach(s=>$(s).classList.toggle('hidden', s!==id)); window.scrollTo(0,0); }
+
+function startRound(words){
+  if(!words.length){ alert('Add at least one word in the format: French = English'); return; }
+  lastDeckSource = words;
+  const c = $('count').value;
+  deck = shuffle(words);
+  if(c!=='all') deck = deck.slice(0, parseInt(c,10));
+  idx=0; score=0; missed=[];
+  show('practice'); loadWord();
+}
+
+function loadWord(){
+  answered=false;
+  $('answer').value=''; $('answer').disabled=false;
+  $('feedback').classList.add('hidden');
+  $('answerActions').classList.remove('hidden');
+  $('nextActions').classList.add('hidden');
+  $('progText').textContent = `Word ${idx+1} of ${deck.length}`;
+  $('scoreText').textContent = `${score} correct`;
+  $('barFill').style.width = (idx/deck.length*100)+'%';
+  speak(deck[idx][0]);
+  $('answer').focus();
+}
+
+function primary(ans){ return ans.split(/[\/,;]/)[0].trim(); }
+
+function submit(giveUp){
+  if(answered) return;
+  const [fr, en] = deck[idx];
+  const result = giveUp ? 'wrong' : check($('answer').value, en);
+  if(result==='empty'){ $('answer').focus(); return; }
+  answered=true;
+  const fb = $('feedback');
+  const frLine = $('showFr').checked ? `<span class="fr">${fr}</span>` : '';
+  if(result==='exact'){
+    score++; fb.className='feedback good';
+    fb.innerHTML = `${frLine}Correct, it means “${primary(en)}”.`;
+  } else if(result==='close'){
+    score++; fb.className='feedback good';
+    fb.innerHTML = `${frLine}Correct! Check the spelling: “${primary(en)}”.`;
+  } else {
+    missed.push(deck[idx]); fb.className='feedback bad';
+    fb.innerHTML = `${frLine}${giveUp?'':'Not quite. '}It means “${primary(en)}”.`;
+  }
+  $('answer').disabled=true;
+  $('scoreText').textContent = `${score} correct`;
+  $('answerActions').classList.add('hidden');
+  $('nextActions').classList.remove('hidden');
+  $('nextBtn').focus();
+  if(result==='wrong') speak(fr);
+}
+
+function next(){
+  idx++;
+  if(idx>=deck.length) return finish();
+  loadWord();
+}
+
+function finish(){
+  $('barFill').style.width='100%';
+  $('finalScore').textContent = `${score} / ${deck.length}`;
+  const pct = score/deck.length;
+  $('finalMsg').textContent = pct===1 ? 'Every word right. Parfait!' : pct>=0.7 ? 'Great listening. Have another go at the ones you missed.' : 'Good effort. Practising the tricky words again really helps.';
+  document.querySelector('#results h1').textContent = pct===1 ? 'Parfait!' : pct>=0.7 ? 'Bien joué!' : 'Continue!';
+  $('missedList').innerHTML = missed.map(([fr,en])=>`<li><span class="fr">${fr}</span> = ${primary(en)}</li>`).join('');
+  $('missedBox').classList.toggle('hidden', !missed.length);
+  $('retryMissedBtn').classList.toggle('hidden', !missed.length);
+  show('results');
+}
+
+$('missedList').addEventListener('click', e=>{
+  const li = e.target.closest('li'); if(li) speak(li.querySelector('.fr').textContent);
+});
+
+$('startBtn').onclick = ()=> startRound(getWords());
+$('speakBtn').onclick = ()=> speak(deck[idx][0]);
+$('slowBtn').onclick = ()=> speak(deck[idx][0], true);
+$('checkBtn').onclick = ()=> submit(false);
+$('skipBtn').onclick = ()=> submit(true);
+$('nextBtn').onclick = next;
+$('answer').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); submit(false); } });
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && answered && !$('practice').classList.contains('hidden') && document.activeElement!==$('nextBtn')){ e.preventDefault(); next(); }
+});
+$('quitBtn').onclick = ()=>{ speechSynthesis && speechSynthesis.cancel(); show('setup'); };
+$('retryMissedBtn').onclick = ()=>{ const m=missed.slice(); deck=shuffle(m); idx=0; score=0; missed=[]; lastDeckSource=m; show('practice'); loadWord(); };
+$('againBtn').onclick = ()=> startRound(getWords());
+$('homeBtn').onclick = ()=> show('setup');
+
+$('customText').addEventListener('input', ()=>{ if(topic==='My words') store.set('ecoute-custom', $('customText').value); updateCount(); });
+$('saveListBtn').onclick = ()=>{
+  const name = $('listName').value.trim();
+  if(!name){ $('listName').focus(); $('customCount').textContent = 'Give the list a name to save it.'; return; }
+  if(!parseList($('customText').value).words.length){ updateCount(); return; }
+  if(topic.startsWith('saved:') && topic.slice(6)!==name) delete saved[topic.slice(6)];
+  saved[name] = $('customText').value; persist();
+  selectTopic('saved:'+name);
+  $('customCount').textContent = `Saved “${name}”. ` + $('customCount').textContent;
+};
+$('deleteListBtn').onclick = ()=>{
+  const n = topic.slice(6);
+  if(!confirm(`Delete the list “${n}”?`)) return;
+  delete saved[n]; persist(); selectTopic('My words');
+};
+$('fileIn').onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    $('customText').value = r.result;
+    if(!$('listName').value) $('listName').value = f.name.replace(/\.[^.]+$/,'');
+    if(topic==='My words') store.set('ecoute-custom', r.result);
+    updateCount();
+  };
+  r.readAsText(f);
+  e.target.value = '';
+};
+if('serviceWorker' in navigator){ window.addEventListener('load', ()=> navigator.serviceWorker.register('/sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>
