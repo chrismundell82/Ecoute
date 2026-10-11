@@ -124,7 +124,7 @@ input.text{font:inherit; color:var(--ink); background:var(--paper); border:2px s
 
   <div id="customBox" class="hidden">
     <h2>Your word list</h2>
-    <p class="note">One word per line, French first, then English. Separate them with =, a spaced dash, a comma or a tab, so a list pasted straight from a spreadsheet works. Add extra accepted answers with a slash, e.g. <em>la voiture = car / automobile</em></p>
+    <p class="note">One word per line, French first, then English. Separate them with =, a spaced dash, a comma or a tab, so a list pasted straight from a spreadsheet works. Add extra accepted answers with a slash, e.g. <em>la voiture = car / automobile</em>. When you load or paste a list, other answers that should also count (like <em>it is</em> for <em>it's</em>) are added automatically. Saved lists appear on all your devices.</p>
     <textarea id="customText" spellcheck="false"></textarea>
     <p class="note" id="customCount"></p>
     <div class="row">
@@ -133,6 +133,7 @@ input.text{font:inherit; color:var(--ink); background:var(--paper); border:2px s
     </div>
     <div class="actions">
       <button class="secondary" id="saveListBtn">Save list</button>
+      <button class="secondary" id="altBtn">Find alternative answers</button>
       <label class="secondary filebtn">Load from file<input type="file" id="fileIn" accept=".txt,.csv,.tsv,text/plain,text/csv" hidden></label>
       <button class="link hidden" id="deleteListBtn">Delete this list</button>
     </div>
@@ -256,31 +257,77 @@ const store = {
 };
 
 const SAMPLE = "la voiture = car\nla maison = house / home\nle soleil = sun";
-let saved = {};
-try{ saved = JSON.parse(store.get('ecoute-lists') || '{}') || {}; }catch(e){ saved = {}; }
-function persist(){ store.set('ecoute-lists', JSON.stringify(saved)); }
+// Saved lists live on the server so every device sees them. A copy is kept on the
+// device for offline use, and changes made offline wait in `pending` until they reach the server.
+function loadJSON(k){ try{ return JSON.parse(store.get(k) || '{}') || {}; }catch(e){ return {}; } }
+let saved = loadJSON('ecoute-lists');
+let pending = loadJSON('ecoute-pending');   // name -> text to upload, or null to delete
+function persist(){ store.set('ecoute-lists', JSON.stringify(saved)); store.set('ecoute-pending', JSON.stringify(pending)); }
+function queueChange(name, text){ pending[name] = text; persist(); return flush(); }
+async function flush(){
+  for(const [name, text] of Object.entries(pending)){
+    try{
+      const r = await fetch('/api/lists/'+encodeURIComponent(name), text===null
+        ? {method:'DELETE'}
+        : {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text})});
+      if(!r.ok && r.status!==400) return false;   // a 400 will never succeed, so drop it
+    }catch(e){ return false; }
+    if(pending[name]===text) delete pending[name];
+  }
+  persist();
+  return true;
+}
+let syncing = false;
+async function sync(){
+  if(syncing) return; syncing = true;
+  try{
+    // First sync on this device: upload the lists it saved before syncing existed
+    if(store.get('ecoute-synced')===null){
+      Object.keys(saved).forEach(n=>{ if(!(n in pending)) pending[n] = saved[n]; });
+      persist();
+    }
+    if(!await flush()) return;
+    const r = await fetch('/api/lists', {cache:'no-store'});
+    if(!r.ok) return;
+    const server = (await r.json()).lists || {};
+    store.set('ecoute-synced', '1');
+    Object.entries(pending).forEach(([n,t])=>{ if(t===null) delete server[n]; else server[n] = t; });
+    const before = saved;
+    saved = server; persist();
+    if(topic.startsWith('saved:')){
+      const n = topic.slice(6);
+      if(saved[n]===undefined) return selectTopic('My words');
+      if(saved[n]!==before[n] && $('customText').value===before[n]){ $('customText').value = saved[n]; updateCount(); }
+    }
+    renderTopics();
+  }catch(e){
+  }finally{ syncing = false; }
+}
 let topic = store.get('ecoute-topic') || 'Greetings';
 if(!LISTS[topic] && !(topic.startsWith('saved:') && saved[topic.slice(6)] !== undefined)) topic = 'Greetings';
 
 // Read a pasted list: French first, then English, split on the first separator found
+// Returns [french, english], 'header' for a "French, English" heading row, or null
+function parseLine(raw){
+  const line = raw.trim();
+  if(!line) return null;
+  const seps = ['=', '\t', ' - ', ' – ', ' — ', ';', ','];
+  for(const s of seps){
+    const i = line.indexOf(s);
+    if(i>0){
+      const fr = line.slice(0,i).trim().replace(/^"|"$/g,'');
+      const en = line.slice(i+s.length).trim().replace(/^"|"$/g,'');
+      if(fr && en) return (fr.toLowerCase()==='french' && en.toLowerCase().startsWith('english')) ? 'header' : [fr,en];
+    }
+  }
+  return null;
+}
 function parseList(text){
   const words = [], bad = [];
-  const seps = ['=', '\t', ' - ', ' – ', ' — ', ';', ','];
   text.split(/\r?\n/).forEach(raw=>{
-    const line = raw.trim();
-    if(!line) return;
-    for(const s of seps){
-      const i = line.indexOf(s);
-      if(i>0){
-        const fr = line.slice(0,i).trim().replace(/^"|"$/g,'');
-        const en = line.slice(i+s.length).trim().replace(/^"|"$/g,'');
-        if(fr && en){
-          if(!(fr.toLowerCase()==='french' && en.toLowerCase().startsWith('english'))) words.push([fr,en]);
-          return;
-        }
-      }
-    }
-    bad.push(line);
+    const p = parseLine(raw);
+    if(Array.isArray(p)) words.push(p);
+    else if(p===null && raw.trim()) bad.push(raw.trim());
   });
   return {words, bad};
 }
@@ -375,13 +422,82 @@ function lev(a,b){
   }
   return prev[n];
 }
+// Contractions count the same as their long form and as the form without the apostrophe,
+// so "it's", "it is" and "its" all match each other.
+function expandContractions(s){
+  return s
+    .replace(/\bcan't\b/g,'cannot').replace(/\bwon't\b/g,'will not').replace(/\bshan't\b/g,'shall not')
+    .replace(/\blet's\b/g,'let us')
+    .replace(/n't\b/g,' not').replace(/'re\b/g,' are').replace(/'m\b/g,' am')
+    .replace(/'ll\b/g,' will').replace(/'ve\b/g,' have').replace(/'d\b/g,' would')
+    .replace(/\b(it|he|she|that|what|there|here|who|where|how|when|why|this)'s\b/g,'$1 is');
+}
+function variants(s){
+  const n = norm(s), out = new Set([n]);
+  if(n.includes("'")){
+    const e = expandContractions(n);
+    out.add(e); out.add(e.replace(/\bcannot\b/g,'can not')); out.add(n.replace(/'/g,''));
+  }
+  return out;
+}
 function check(input, answers){
   const g = norm(input);
   if(!g) return 'empty';
-  const opts = answers.split(/[\/,;]/).map(norm).filter(Boolean);
-  if(opts.includes(g)) return 'exact';
-  if(opts.some(o=> o.length>=5 && lev(g,o)<=1)) return 'close';
+  const gs = [...variants(input)];
+  const opts = answers.split(/[\/,;]/).filter(o=>norm(o));
+  if(opts.some(o=>{ const vs = variants(o); return gs.some(v=>vs.has(v)); })) return 'exact';
+  if(opts.map(norm).some(o=> o.length>=5 && lev(g,o)<=1)) return 'close';
   return 'wrong';
+}
+
+// Adds other accepted answers to a list: contraction forms here, plus synonyms and
+// spelling variants from the server when it has an AI key configured.
+function contractionForms(ans){
+  const a = ans.trim().replace(/[’']/g,"'");
+  if(!a.includes("'")) return [];
+  const e = expandContractions(a.toLowerCase());
+  return [a.replace(/'/g,''), e];
+}
+let altBusy = false;
+async function addAlternatives(){
+  if(altBusy) return;
+  const text = $('customText').value;
+  const lines = text.split(/\r?\n/);
+  const parsed = lines.map(parseLine);
+  const words = parsed.filter(Array.isArray);
+  if(!words.length) return;
+  altBusy = true; $('altBtn').disabled = true;
+  $('customCount').textContent = 'Checking for alternative answers…';
+  let ai = [];
+  try{
+    const r = await fetch('/api/alternatives', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({words})});
+    if(r.ok) ai = (await r.json()).alternatives || [];
+  }catch(e){}
+  altBusy = false; $('altBtn').disabled = false;
+  if($('customText').value!==text){ updateCount(); return; }   // edited meanwhile, leave it alone
+  let added = 0, w = 0;
+  const out = lines.map((line, i)=>{
+    const p = parsed[i];
+    if(!Array.isArray(p)) return line;
+    const [fr, en] = p, extra = ai[w++] || [];
+    const answers = en.split(/[\/,;]/).map(a=>a.trim()).filter(Boolean);
+    const seen = new Set(answers.map(norm));
+    const more = [];
+    answers.flatMap(contractionForms).concat(extra).forEach(a=>{
+      a = String(a).replace(/[\/,;=\t]/g,' ').replace(/\s+/g,' ').trim().slice(0,60);
+      if(a && !seen.has(norm(a))){ seen.add(norm(a)); more.push(a); }
+    });
+    if(!more.length) return line;
+    added += more.length;
+    return `${fr} = ${answers.concat(more).join(' / ')}`;
+  });
+  updateCount();
+  if(!added){ $('customCount').textContent = 'No extra answers to add. ' + $('customCount').textContent; return; }
+  $('customText').value = out.join('\n');
+  if(topic==='My words') store.set('ecoute-custom', $('customText').value);
+  updateCount();
+  $('customCount').textContent = `Added ${added} alternative answer${added>1?'s':''} after the slashes. Delete any you don't want` +
+    (topic.startsWith('saved:') ? ', then save the list. ' : '. ') + $('customCount').textContent;
 }
 
 // Session
@@ -484,20 +600,30 @@ $('retryMissedBtn').onclick = ()=>{ const m=missed.slice(); deck=shuffle(m); idx
 $('againBtn').onclick = ()=> startRound(getWords());
 $('homeBtn').onclick = ()=> show('setup');
 
-$('customText').addEventListener('input', ()=>{ if(topic==='My words') store.set('ecoute-custom', $('customText').value); updateCount(); });
-$('saveListBtn').onclick = ()=>{
+$('customText').addEventListener('input', e=>{
+  if(topic==='My words') store.set('ecoute-custom', $('customText').value);
+  updateCount();
+  if(e.inputType==='insertFromPaste') addAlternatives();
+});
+$('altBtn').onclick = addAlternatives;
+$('saveListBtn').onclick = async ()=>{
   const name = $('listName').value.trim();
   if(!name){ $('listName').focus(); $('customCount').textContent = 'Give the list a name to save it.'; return; }
   if(!parseList($('customText').value).words.length){ updateCount(); return; }
-  if(topic.startsWith('saved:') && topic.slice(6)!==name) delete saved[topic.slice(6)];
-  saved[name] = $('customText').value; persist();
+  const text = $('customText').value;
+  if(topic.startsWith('saved:') && topic.slice(6)!==name){ delete saved[topic.slice(6)]; pending[topic.slice(6)] = null; }
+  saved[name] = text;
   selectTopic('saved:'+name);
-  $('customCount').textContent = `Saved “${name}”. ` + $('customCount').textContent;
+  $('customCount').textContent = `Saving “${name}”… ` + $('customCount').textContent;
+  const ok = await queueChange(name, text);
+  if(topic!=='saved:'+name) return;
+  updateCount();
+  $('customCount').textContent = (ok ? `Saved “${name}” on all your devices. ` : `Saved “${name}” on this device. It will reach your other devices next time you're online. `) + $('customCount').textContent;
 };
 $('deleteListBtn').onclick = ()=>{
   const n = topic.slice(6);
   if(!confirm(`Delete the list “${n}”?`)) return;
-  delete saved[n]; persist(); selectTopic('My words');
+  delete saved[n]; queueChange(n, null); selectTopic('My words');
 };
 $('fileIn').onchange = e=>{
   const f = e.target.files[0]; if(!f) return;
@@ -507,10 +633,14 @@ $('fileIn').onchange = e=>{
     if(!$('listName').value) $('listName').value = f.name.replace(/\.[^.]+$/,'');
     if(topic==='My words') store.set('ecoute-custom', r.result);
     updateCount();
+    addAlternatives();
   };
   r.readAsText(f);
   e.target.value = '';
 };
+sync();
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') sync(); });
+window.addEventListener('online', sync);
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=> navigator.serviceWorker.register('/sw.js').catch(()=>{})); }
 </script>
 </body>

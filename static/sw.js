@@ -1,6 +1,6 @@
 // Keeps the app working with no internet once it has been opened.
 // Bump the version when you change index.html so devices pick up the update.
-const CACHE = 'ecoute-v1';
+const CACHE = 'ecoute-v2';
 const FILES = ['/', '/manifest.json', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -11,7 +11,7 @@ self.addEventListener('activate', e => {
 });
 // Network first, so updates arrive when online; fall back to the cache when offline.
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
+  if (e.request.method !== 'GET' || new URL(e.request.url).pathname.startsWith('/api/')) return;
   e.respondWith(
     fetch(e.request).then(resp => {
       if (resp.ok && (new URL(e.request.url).origin === location.origin || e.request.url.includes('fonts.g'))) {
